@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/main.qml</file>
+        <file>qml/MediaParsing/StreamParsingPage.qml</file>
+        <file>qml/common/time.js</file>
+        <file>qml/MediaParsing/StreamInfoView.qml</file>
+    </qresource>
+</RCC>

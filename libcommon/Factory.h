@@ -2,7 +2,7 @@
 #define FACTORY_H
 #include "Singleton.h"
 #include <map>
-#include <queue>
+#include <vector>
 template <typename Id, typename T, class C>
 class Factory:public Singleton<C>
 {
@@ -13,18 +13,17 @@ class Factory:public Singleton<C>
 
 public:
     Type* create(const ID & id);
-    bool registerCreatorFunc(const ID & id, const CreatorFunc & func);
     // Avoid cross-DLL delivery crashes caused by different CRT links
     // so name must be literal
-    bool registerCreatorName(const ID & id, const char * name);
+    bool registerCreatorFunc(const ID &id, const char *name, const CreatorFunc &func);
     bool unregisterCreatorFunc(const ID & id);
-    bool unregisterCreatorName(const ID & id);
+    bool contain(const ID & id);
     const char * name(const ID & id);
+    ID id(const char * name);
 
 private:
     std::map<ID, const char*> m_nameMap;
     std::map<ID, CreatorFunc> m_creatorMap;
-    std::queue<ID> m_ids;
 };
 
 #endif // FACTORY_H
