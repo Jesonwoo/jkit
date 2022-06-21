@@ -5,6 +5,10 @@ namespace jkit{
 class NaluPrivate
 {
 public:
+
+    // TEST
+    void debugNalu();
+
     NaluPrivate();
     ~NaluPrivate();
 
@@ -31,8 +35,8 @@ public:
     int64_t frameNum() const;
     void setFrameNum(int64_t newFrameNum);
 
-    // TEST
-    void debugNalu();
+    int32_t sliceNum() const;
+    void setSliceNum(int32_t newSliceNum);
 
 private:
     NaluType  m_naluType = NALU_TYPE_UNSPECIFIED;
@@ -40,8 +44,10 @@ private:
 
     int32_t m_length = 0;     // payload+startcode
     int32_t m_startCodeLength = 4;
+    int32_t m_sliceNum = 0;  // slice编号
     int64_t m_offset = 0;    // 文件中的偏移位置
     int64_t m_frameNum = 0;  // 帧编号[0, n)
+
 };
 } // namespace jkit
 #endif // NALUPRIVATE_H

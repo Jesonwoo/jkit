@@ -13,7 +13,7 @@ void StreamParser::openStream(const QString &url)
     }
     m_h264Parser.reset(new jkit::H264Parser(url.toStdString()));
     QtConcurrent::run([this](){
-        if(m_h264Parser->init()) {
+        if(m_h264Parser->open()) {
             jkit::H264StreamInfo info;
             m_h264Parser->getStreamInfo(info);
             m_isOpen = true;
@@ -37,7 +37,7 @@ bool StreamParser::closeStream()
     if(!m_isOpen) {
         return false;
     }
-    m_h264Parser->deinit();
+    m_h264Parser->close();
     return true;
 }
 
@@ -108,6 +108,7 @@ QJsonObject StreamParser::naluToJsonObj(const jkit::Nalu &n)
     QJsonObject obj;
     obj.insert("frame_type", getFrameType(n));
     obj.insert("length", n.length());
+    obj.insert("slice_num", n.sliceNum());
     obj.insert("frame_num", n.frameNum());
     obj.insert("offset", QString("0x%1").arg(n.offset(), 8, 16, QLatin1Char('0')));
     obj.insert("slice_type", n.sliceType());

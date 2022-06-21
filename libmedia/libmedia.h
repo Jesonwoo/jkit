@@ -5,6 +5,5 @@
 #include "MediaParsing/H264StreamInfo.h"
 #include "MediaParsing/H264Parser.h"
 
-
 #endif // !LIBMEDIA_H
 

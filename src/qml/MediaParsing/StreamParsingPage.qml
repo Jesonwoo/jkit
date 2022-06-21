@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Dialogs 1.3
 import com.jkit.app 1.0
@@ -18,7 +18,7 @@ Page {
             streamInfoView.updateStreamInfo(info)
             for(var i =0; i < streamParser.naluCount(); ++i) {
                 var nal = streamParser.getNaluInfo(i);
-                console.log(JSON.stringify(nal))
+//                console.log(JSON.stringify(nal))
                 naluListModel.append(nal);
             }
         }
@@ -54,7 +54,6 @@ Page {
 
     MenuBar {
         id: menuBar
-        height: parent.height*0.08
         width: parent.width
 
         Menu {
@@ -69,7 +68,6 @@ Page {
             MenuSeparator { }
             Action { text: qsTr("&Quit") }
         }
-
     }
 
     ListView {
@@ -85,9 +83,6 @@ Page {
         ScrollBar.vertical: ScrollBar  {
             width: 10
             height: 50
-        }
-
-        onCurrentIndexChanged: {
         }
         // 折叠上一个选中item
         function foldLastItem() {
@@ -176,7 +171,7 @@ Page {
                         if(frame_type === "I"
                                 ||frame_type === "P"
                                 || frame_type === "B") {
-                            str = String("%1 Frame #%2").arg(frame_type).arg(frame_num)
+                            str = String("%1 Frame #%2 slice #%3").arg(frame_type).arg(frame_num).arg(slice_num)
                         } else {
                             str = frame_type
                         }
@@ -202,7 +197,6 @@ Page {
                         naluInfoRect.border.color = "#ffffff"
                     }
                 }
-
             }
             // nalu下标
             Text {
@@ -233,8 +227,9 @@ Page {
                     id: syntaxTxt
                     anchors.left: syntaxColorRect.right
                     anchors.leftMargin: 4
+                    width: syntaxView.width - syntaxTxt.x
                     lineHeight: 1.2
-
+                    elide: Text.ElideRight
                 }
             }
 

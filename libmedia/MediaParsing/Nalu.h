@@ -45,6 +45,10 @@ class NaluPrivate;
 class MEDIA_EXPORT Nalu
 {
 public:
+
+    // TEST
+    void debugNalu();
+
     Nalu();
     ~Nalu();
     Nalu(const Nalu &other);
@@ -70,13 +74,16 @@ public:
     int64_t frameNum() const;
     void setFrameNum(int64_t newFrameNum);
 
+    int32_t sliceNum() const;
+    void setSliceNum(int32_t newSliceNum);
+
+public:
     static std::string nalTypeToStr(NaluType type);
     static std::string sliceTypeToStr(SliceType type);
 
-    // TEST
-    void debugNalu();
-
 private:
+    int32_t m_sliceNum = 0;  // slice编号
+
     std::shared_ptr<NaluPrivate> m_d;
 };
 } // namespace jkit

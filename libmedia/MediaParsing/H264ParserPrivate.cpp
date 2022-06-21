@@ -11,7 +11,7 @@ H264ParserPrivate::H264ParserPrivate(const std::string &filepath)
 {
 }
 
-bool H264ParserPrivate::init()
+bool H264ParserPrivate::open()
 {
     if(m_isInit) {
         return true;
@@ -28,33 +28,25 @@ bool H264ParserPrivate::init()
     buf = new(std::nothrow) uint8_t[bufMaxSize];
     if(nullptr == buf) {
         LOGE(this, "Failed to apply for buffer[size:%d]!!\n", bufMaxSize);
+        stream.close();
         return false;
     }
     int byteCount = 0;
     int64_t offset = 0, sz = 0;
     int nalStart; int nalEnd;
     uint8_t* p = buf;
-    static int size = 0;
 
     while(true){
         if((byteCount = stream.read((char*)buf+sz, bufMaxSize-sz).gcount())<=0) {
             break;
         }
-        size += byteCount;
-        //        for(int i = 0; i < byteCount; ++i) {
-        //            printf("0x%02X ", *(buf+i)&0xff);
-        //            if(i%16 == 0) {
-        //                printf("\n");
-        //            }
-        //        }
-
         sz += byteCount;
         while(find_nal_unit(p, sz, &nalStart, &nalEnd) > 0) {
             // skip start code
             p += nalStart;
             // got a nalu
             read_nal_unit(h264Stream, p, nalEnd - nalStart);
-
+            // 获取h264流相关信息
             getH264StreamIfno(h264Stream, m_streamInfo);
 
             Nalu n;
@@ -62,11 +54,16 @@ bool H264ParserPrivate::init()
             if(nalType == NALU_TYPE_CODED_SLICE_IDR
                     || nalType == NALU_TYPE_CODED_SLICE_NON_IDR
                     || nalType == NALU_TYPE_CODED_SLICE_AUX) {
+                if(h264Stream->sh->first_mb_in_slice == 0) {
+                    m_sliceNum = 0;
+                } else {
+                    m_sliceNum++;
+                }
                 n.setSliceType((SliceType)h264Stream->sh->slice_type);
-//                debug_slice_header(h264Stream->sh);
             }
             n.setLength(nalEnd);
             n.setStartCodeLength(nalStart);
+            n.setSliceNum(m_sliceNum);
             n.setOffset(offset + (p - buf) - nalStart);
             n.setNaluType((NaluType)h264Stream->nal->nal_unit_type);
             n.setFrameNum(m_streamInfo.frameCount()-1);
@@ -272,16 +269,16 @@ string H264ParserPrivate::getSyntax(h264_stream_t *s)
         default :                                           nal_unit_type_name = "Unknown"; break;
     }
     PRINT_TO_SYNTAX(syntax, " nal_unit_type : %d ( %s ) \n", s->nal->nal_unit_type, nal_unit_type_name );
-    if( s->nal->nal_unit_type == NAL_UNIT_TYPE_CODED_SLICE_NON_IDR) { syntax.append(debug_slice_header(s->sh)); }
-    else if( s->nal->nal_unit_type == NAL_UNIT_TYPE_CODED_SLICE_IDR) { syntax.append(debug_slice_header(s->sh)); }
-    else if( s->nal->nal_unit_type == NAL_UNIT_TYPE_SPS) { syntax.append(debug_sps(s->sps)); }
-    else if( s->nal->nal_unit_type == NAL_UNIT_TYPE_PPS) { syntax.append(debug_pps(s->pps)); }
-    else if( s->nal->nal_unit_type == NAL_UNIT_TYPE_AUD) { syntax.append(debug_aud(s->aud)); }
-    else if( s->nal->nal_unit_type == NAL_UNIT_TYPE_SEI) { syntax.append(debug_seis( s )); }
+    if( s->nal->nal_unit_type == NAL_UNIT_TYPE_CODED_SLICE_NON_IDR) { syntax.append(getSliceHeaderSyntax(s->sh)); }
+    else if( s->nal->nal_unit_type == NAL_UNIT_TYPE_CODED_SLICE_IDR) { syntax.append(getSliceHeaderSyntax(s->sh)); }
+    else if( s->nal->nal_unit_type == NAL_UNIT_TYPE_SPS) { syntax.append(getSPSSyntax(s->sps)); }
+    else if( s->nal->nal_unit_type == NAL_UNIT_TYPE_PPS) { syntax.append(getPPSSyntax(s->pps)); }
+    else if( s->nal->nal_unit_type == NAL_UNIT_TYPE_AUD) { syntax.append(getAudSyntax(s->aud)); }
+    else if( s->nal->nal_unit_type == NAL_UNIT_TYPE_SEI) { syntax.append(getSEISyntax( s )); }
     return syntax;
 }
 
-string H264ParserPrivate::debug_sps(sps_t *sps)
+string H264ParserPrivate::getSPSSyntax(sps_t *sps)
 {
     string syntax;
     PRINT_TO_SYNTAX(syntax, " profile_idc : %d \n", sps->profile_idc );
@@ -379,7 +376,7 @@ string H264ParserPrivate::debug_sps(sps_t *sps)
     return syntax;
 }
 
-string H264ParserPrivate::debug_pps(pps_t *pps)
+string H264ParserPrivate::getPPSSyntax(pps_t *pps)
 {
     string syntax;
     PRINT_TO_SYNTAX(syntax, " pic_parameter_set_id : %d \n", pps->pic_parameter_set_id );
@@ -416,9 +413,10 @@ string H264ParserPrivate::debug_pps(pps_t *pps)
     return syntax;
 }
 
-string H264ParserPrivate::debug_slice_header(slice_header_t *sh)
+string H264ParserPrivate::getSliceHeaderSyntax(slice_header_t *sh)
 {
     string syntax;
+    PRINT_TO_SYNTAX(syntax, "======= Slice Header =======\n");
     PRINT_TO_SYNTAX(syntax, " first_mb_in_slice : %d \n", sh->first_mb_in_slice );
     const char* slice_type_name;
     switch(sh->slice_type)
@@ -494,7 +492,7 @@ string H264ParserPrivate::debug_slice_header(slice_header_t *sh)
     return syntax;
 }
 
-string H264ParserPrivate::debug_aud(aud_t* aud)
+string H264ParserPrivate::getAudSyntax(aud_t* aud)
 {
     string syntax;
     PRINT_TO_SYNTAX(syntax, "======= Access Unit Delimiter =======\n");
@@ -515,7 +513,7 @@ string H264ParserPrivate::debug_aud(aud_t* aud)
     return syntax;
 }
 
-string H264ParserPrivate::debug_seis( h264_stream_t* h)
+string H264ParserPrivate::getSEISyntax( h264_stream_t* h)
 {
     string syntax;
     sei_t** seis = h->seis;
@@ -555,14 +553,27 @@ string H264ParserPrivate::debug_seis( h264_stream_t* h)
         PRINT_TO_SYNTAX(syntax, "=== %s ===\n", sei_type_name);
         PRINT_TO_SYNTAX(syntax, " payloadType : %d \n", s->payloadType );
         PRINT_TO_SYNTAX(syntax, " payloadSize : %d \n", s->payloadSize );
-
-        PRINT_TO_SYNTAX(syntax, " payload : " );
-//        debug_bytes(s->payload, s->payloadSize);
+        PRINT_TO_SYNTAX(syntax, " payload : ");
+        syntax.append(hexToString(s->payload, s->payloadSize));
     }
     return syntax;
 }
 
-bool H264ParserPrivate::deinit()
+string H264ParserPrivate::hexToString(const uint8_t *buf, size_t size, int newline )
+{
+    string str;
+    for(int i = 0; i < size; ++i) {
+        char byte[16] = {0};
+        sprintf(byte, "%02X ", buf[i]);
+        str.append(byte);
+        if(newline > 0 && (i+1) % newline == 0) {
+            str.append("\n");
+        }
+    }
+    return str;
+}
+
+bool H264ParserPrivate::close()
 {
     if(m_isInit) {
         m_naluList.clear();
@@ -611,10 +622,6 @@ string H264ParserPrivate::getNaluSyntax(uint64_t idx)
     }
 
     uint8_t * p = buf;
-
-//    n.debugNalu();
-//    debug_bytes(p, n.startCodeLength());
-
     p += n.startCodeLength();
     h264_stream_t *s = h264_new();
     if(read_nal_unit(s, p, bufSize - n.startCodeLength()) <= 0) {

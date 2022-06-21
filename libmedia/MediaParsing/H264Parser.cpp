@@ -6,14 +6,14 @@ H264Parser::H264Parser(const std::string &filepath)
 {
 }
 
-bool H264Parser::init()
+bool H264Parser::open()
 {
-    return m_d->init();
+    return m_d->open();
 }
 
-bool H264Parser::deinit()
+bool H264Parser::close()
 {
-    return m_d->deinit();
+    return m_d->close();
 }
 
 uint64_t H264Parser::getNaluCount()

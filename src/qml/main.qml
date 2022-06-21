@@ -17,5 +17,4 @@ ApplicationWindow {
     Component.onCompleted: {
         loader.source = "MediaParsing/StreamParsingPage.qml"
     }
-
 }

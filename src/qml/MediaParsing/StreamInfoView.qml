@@ -3,18 +3,33 @@ import "../common/time.js" as Time
 
 Item {
     id: root
+    property int lineHeight: 24
     property var streamInfo: null
     property var itemName: ["name", "profile", "level", "chroma_format",
         "width", "height", "fram_count", "frame_rate", "duration"]
 
+    Rectangle {
+        id: header
+        width: root.width
+        height: root.lineHeight
+        color: "#f0f0f0"
+        Text {
+            anchors.fill: header
+            verticalAlignment: Text.AlignVCenter
+            text: qsTr("Stream Info")
+        }
+    }
+
     Column {
-        anchors.fill: root
+        anchors.top: header.bottom
+        width: root.width
+        height: root.height-header.height
         Repeater {
             id: streamInfoRepeater
             model:root.itemName
             delegate: Rectangle {
                 id: streamInfoItem
-                height: 24
+                height: root.lineHeight
                 width: root.width
                 color: index % 2 == 1 ? "#f4f6fa":"#ffffff"
                 Text {

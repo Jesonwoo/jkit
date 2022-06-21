@@ -2,6 +2,11 @@
 #include "NaluPrivate.h"
 namespace jkit{
 
+void Nalu::debugNalu()
+{
+    m_d->debugNalu();
+}
+
 Nalu::Nalu()
     : m_d(new NaluPrivate)
 {
@@ -99,6 +104,16 @@ int64_t Nalu::frameNum() const
 void Nalu::setFrameNum(int64_t newFrameNum)
 {
     m_d->setFrameNum(newFrameNum);
+}
+
+int32_t Nalu::sliceNum() const
+{
+    return m_d->sliceNum();
+}
+
+void Nalu::setSliceNum(int32_t newSliceNum)
+{
+    m_d->setSliceNum(newSliceNum);
 }
 
 std::string Nalu::nalTypeToStr(NaluType type)
@@ -200,8 +215,4 @@ std::string Nalu::sliceTypeToStr(SliceType type)
     return ret;
 }
 
-void Nalu::debugNalu()
-{
-    m_d->debugNalu();
-}
 } // namespace jkit

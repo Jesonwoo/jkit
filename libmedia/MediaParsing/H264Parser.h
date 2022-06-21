@@ -11,15 +11,15 @@ class MEDIA_EXPORT H264Parser
 {
 public:
     H264Parser(const std::string &filepath);
-    bool init(void);
-    bool deinit(void);
+    bool open(void);
+    bool close(void);
     uint64_t getNaluCount(void);
     bool getNaluInfo(uint64_t idx, Nalu &nalu);
     bool getStreamInfo(H264StreamInfo &info);
     string getNaluSyntax(uint64_t idx);
 
     string filepath(void);
-
+    // TEST
     void showNalus(void);
     void showStreamInfo(void);
 
