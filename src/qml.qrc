@@ -4,5 +4,7 @@
         <file>qml/MediaParsing/StreamParsingPage.qml</file>
         <file>qml/common/time.js</file>
         <file>qml/MediaParsing/StreamInfoView.qml</file>
+        <file>qml/MediaParsing/HexView.qml</file>
+        <file>qml/common/strutils.js</file>
     </qresource>
 </RCC>

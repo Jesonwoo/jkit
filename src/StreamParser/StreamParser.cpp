@@ -6,12 +6,15 @@ StreamParser::StreamParser(QObject *parent)
 
 }
 
-void StreamParser::openStream(const QString &url)
+void StreamParser::openStream(const QUrl &url)
 {
     if(!m_h264Parser.isNull()) {
         return;
     }
-    m_h264Parser.reset(new jkit::H264Parser(url.toStdString()));
+    if(!url.isLocalFile()) {
+        return;
+    }
+    m_h264Parser.reset(new jkit::H264Parser(url.toLocalFile().toStdString()));
     QtConcurrent::run([this](){
         if(m_h264Parser->open()) {
             jkit::H264StreamInfo info;
@@ -96,7 +99,7 @@ QJsonObject StreamParser::streamInfoToJsonObj(const jkit::H264StreamInfo &info)
     obj.insert("height", info.heigth());
     obj.insert("duration", info.duration());
     obj.insert("level", info.level());
-    obj.insert("fram_count", info.frameCount());
+    obj.insert("fram_count", (long long)info.frameCount());
     obj.insert("frame_rate", info.frameRate());
     obj.insert("profile", info.profile().c_str());
     obj.insert("chroma_format", info.chromaFormat().c_str());
@@ -109,8 +112,8 @@ QJsonObject StreamParser::naluToJsonObj(const jkit::Nalu &n)
     obj.insert("frame_type", getFrameType(n));
     obj.insert("length", n.length());
     obj.insert("slice_num", n.sliceNum());
-    obj.insert("frame_num", n.frameNum());
-    obj.insert("offset", QString("0x%1").arg(n.offset(), 8, 16, QLatin1Char('0')));
+    obj.insert("frame_num", (long long)n.frameNum());
+    obj.insert("offset", n.offset());
     obj.insert("slice_type", n.sliceType());
     obj.insert("start_code", n.startCodeLength());
     return obj;

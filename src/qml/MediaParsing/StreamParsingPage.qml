@@ -1,15 +1,22 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick 2.0
+import QtQuick.Controls 2.12
 import QtQuick.Dialogs 1.3
 import com.jkit.app 1.0
+import "../common/strutils.js" as StrUtils
+
 Page {
     id: root
 
     Component.onCompleted: {
+
     }
 
     StreamParser {
         id: streamParser
+    }
+
+    BinaryStream {
+        id: binaryStream
     }
 
     Connections  {
@@ -18,23 +25,24 @@ Page {
             streamInfoView.updateStreamInfo(info)
             for(var i =0; i < streamParser.naluCount(); ++i) {
                 var nal = streamParser.getNaluInfo(i);
-//                console.log(JSON.stringify(nal))
                 naluListModel.append(nal);
             }
         }
     }
 
-    Rectangle{
-        anchors.fill: parent
-        color: "#f0f0f0"
-    }
+//    Rectangle{
+//        id: bg
+//        anchors.fill: parent
+//        color: "#f0f0f0"
+//    }
 
     // h264流信息窗口
     StreamInfoView {
         id: streamInfoView
         x: naluListView.width
         y: menuBar.height
-        height: root.height-menuBar.height
+        headerHeight: 24
+        height: root.height-menuBar.height-hexView.height
         width: root.width-naluListView.width
     }
 
@@ -43,9 +51,10 @@ Page {
         /*
             {
                 "frame_num":249,
+                "slice_num":0,
                 "frame_type":"P",
                 "length":384,
-                "offset":"0x0005b930",
+                "offset":0,
                 "slice_type":5,
                 "start_code":4
             }
@@ -61,12 +70,16 @@ Page {
             Action {
                 text: qsTr("&Open...")
                 onTriggered: {
-                    fileDialog.folder = "file:///D:/develop/tool/ffmpeg/ffmpeg-static/bin/"
                     fileDialog.open()
                 }
             }
             MenuSeparator { }
-            Action { text: qsTr("&Quit") }
+            Action {
+                text: qsTr("&Quit")
+                onTriggered: {
+                    Qt.quit()
+                }
+            }
         }
     }
 
@@ -76,7 +89,7 @@ Page {
         clip: true
         interactive: true
         anchors.top: menuBar.bottom
-        height: parent.height-menuBar.height
+        height: parent.height-menuBar.height-hexView.height
         width: parent.width * 0.7
         model: naluListModel
         delegate: naluDelegate
@@ -84,11 +97,27 @@ Page {
             width: 10
             height: 50
         }
-        // 折叠上一个选中item
-        function foldLastItem() {
-            if(naluListView.currentIndex !== -1) {
-                naluListView.currentItem.fold()
+        // 收起或展开item
+        // index: 激活的item index
+        function foldOrUnfoldItem(index) {
+            // 收起上一个打开
+            var curIdx = naluListView.currentIndex
+            var curItem = naluListView.currentItem
+            if(curIdx!== -1 && curIdx !== index) {
+                curItem.fold()
             }
+            naluListView.currentIndex = index
+            naluListView.currentItem.switchFoldAndUnfold()
+        }
+        // 高亮选中
+        function highlight(index) {
+            var curIdx = naluListView.currentIndex
+            var curItem = naluListView.currentItem
+            if(curIdx!== -1 && curIdx !== index) {
+                curItem.setHighlight(false)
+            }
+            naluListView.currentIndex = index
+            naluListView.currentItem.setHighlight(true)
         }
     }
 
@@ -97,9 +126,9 @@ Page {
         title: qsTr("Please choose an H264/AVC file")
         nameFilters: ["H264/AVC Files (*.h264)", "*.*"]
         onAccepted: {
-            var filepath = new String(fileUrl)
-            console.log("filepath:", filepath)
-            streamParser.openStream(filepath.replace("file:///", ""));
+            console.log("filepath:", fileUrl)
+            streamParser.openStream(fileUrl)
+            binaryStream.openStream(fileUrl)
         }
     }
 
@@ -110,6 +139,7 @@ Page {
             width: naluListView.width
             height: naluInfoRect.height + (naluItem.isUnfolded ? syntaxView.height:0)
             property bool isUnfolded: false
+            property bool highlight: false
             property color naluItemColor: {
                 var color = "#000000"
                 if(frame_type === "I") {
@@ -127,10 +157,13 @@ Page {
                 }
                 return color
             }
+            // nulu信息
             Rectangle {
                 id: naluInfoRect
                 width: naluItem.width
                 height: 28
+                color: naluItem.highlight  ? "#0079d8":"#ffffff"
+
                 property int spacing: 8
                 Text {
                     id: offsetTxt
@@ -139,12 +172,12 @@ Page {
                     verticalAlignment: Text.AlignVCenter
                     font.pixelSize: Qt.application.font.pixelSize * 1.2
                     color: "gray"
-                    text: offset
+                    text: "0x"+StrUtils.prefixZero(offset.toString(16), 8)
                 }
                 // 色块
                 Rectangle {
                     id: colorRect
-                    x: offsetTxt.width + naluInfoRect.spacing
+                    x: offsetTxt.contentWidth + naluInfoRect.spacing
                     y: (naluInfoRect.height - height)/2
                     width: 4
                     height: naluInfoRect.height-4
@@ -156,8 +189,9 @@ Page {
                     x: colorRect.x+colorRect.width+naluInfoRect.spacing
                     height: naluInfoRect.height
                     verticalAlignment: Text.AlignVCenter
+                    objectName: "triangle"
                     text: naluItem.isUnfolded ? "\u02c5":"\u02c3"
-                    font.pixelSize: Qt.application.font.pixelSize * 1.2
+                    font.pixelSize: Qt.application.font.pixelSize * 1.6
                 }
                 // nalu内容
                 Text {
@@ -176,25 +210,6 @@ Page {
                             str = frame_type
                         }
                         return str
-                    }
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onClicked: {
-                        if(naluListView.currentIndex !== index) {
-                            naluListView.foldLastItem()
-                        }
-                        naluListView.currentIndex = index
-                        naluItem.isUnfolded = !naluItem.isUnfolded
-
-                        syntaxTxt.text = streamParser.getNaluSyntax(index)
-                    }
-                    onEntered: {
-                        naluInfoRect.border.color = "#dddde1"
-                    }
-                    onExited: {
-                        naluInfoRect.border.color = "#ffffff"
                     }
                 }
             }
@@ -233,13 +248,57 @@ Page {
                 }
             }
 
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                onDoubleClicked: {
+                    naluListView.foldOrUnfoldItem(index)
+                    syntaxTxt.text = streamParser.getNaluSyntax(index)
+                }
+                onClicked: {
+                    if(naluListView.currentIndex === index) {
+                        return
+                    }
+
+                    var arr = binaryStream.getHexList(offset, length, 16)
+                    hexView.updateHexList(arr);
+                    naluListView.highlight(index)
+                }
+                onEntered: {
+                    naluInfoRect.border.color = "#dddde1"
+                }
+                onExited: {
+                    naluInfoRect.border.color = "#ffffff"
+                }
+            }
+            // 收起item
             function fold() {
                 naluItem.isUnfolded = false
             }
-
+            // 展开item
             function unfold() {
                 naluItem.isUnfolded = true
             }
+            // 是否展开
+            function isUnFlod() {
+                return naluItem.isUnfolded
+            }
+            // 切换展开和收起的状态
+            function switchFoldAndUnfold() {
+                naluItem.isUnfolded = !naluItem.isUnfolded
+            }
+            // 设置是否高亮
+            function setHighlight(enable) {
+                naluItem.highlight = enable
+            }
         }
+    }
+
+    HexView {
+        id: hexView
+        y: root.height*0.7
+
+        width: root.width
+        height: root.height*0.3
     }
 }

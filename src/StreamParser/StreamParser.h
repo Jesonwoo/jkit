@@ -12,7 +12,7 @@ class StreamParser : public QObject
 public:
     explicit StreamParser(QObject *parent = nullptr);
 
-    Q_INVOKABLE void openStream(const QString &url);
+    Q_INVOKABLE void openStream(const QUrl &url);
     Q_INVOKABLE bool startParseStream(void);
     Q_INVOKABLE bool closeStream(void);
     Q_INVOKABLE QJsonObject streamInfo(void);

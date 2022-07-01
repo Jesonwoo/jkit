@@ -3,7 +3,8 @@ import "../common/time.js" as Time
 
 Item {
     id: root
-    property int lineHeight: 24
+    property int lineHeight: (root.height-headerHeight)/itemName.length
+    property int headerHeight: 24
     property var streamInfo: null
     property var itemName: ["name", "profile", "level", "chroma_format",
         "width", "height", "fram_count", "frame_rate", "duration"]
@@ -11,7 +12,7 @@ Item {
     Rectangle {
         id: header
         width: root.width
-        height: root.lineHeight
+        height: root.headerHeight
         color: "#f0f0f0"
         Text {
             anchors.fill: header
@@ -45,12 +46,10 @@ Item {
                     width: streamInfoItem.width/2
                     elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
-
                     text: {
                         if(modelData === "name") {
                             return "value"
                         }
-
                         var txt = "- -"
                         if(root.streamInfo !== null) {
                             txt = root.streamInfo[modelData]

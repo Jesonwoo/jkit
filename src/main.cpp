@@ -2,6 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QDebug>
 #include <QQuickWindow>
+#include <QFont>
 #include "jkitqmlengine.h"
 
 using namespace std;
@@ -12,7 +13,7 @@ int main(int argc, char *argv[])
     QQuickWindow::setSceneGraphBackend(QSGRendererInterface::OpenGLRhi);
 
     QGuiApplication app(argc, argv);
-
+    app.setFont(QFont("黑体", 10));
     JKitQmlEngine engine;
     if(!engine.run()) {
         qCritical() << "Failed to run engine";
