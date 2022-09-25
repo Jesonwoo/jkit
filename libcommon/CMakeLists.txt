@@ -5,6 +5,7 @@ message("source_dir: ${PROJECT_SOURCE_DIR}")
 project(${PROJECT_NAME})
 
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 #set(SRC Singleton.h Singleton.cpp Factory.h Factory.cpp)
 

@@ -3,6 +3,7 @@
 #include "Singleton.h"
 #include <map>
 #include <vector>
+#include <string>
 template <typename Id, typename T, class C>
 class Factory:public Singleton<C>
 {
