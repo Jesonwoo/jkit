@@ -13,7 +13,6 @@ Item {
         onDragStarted:  interactive = false
         onDragEnded:  interactive = true
 
-
         model: hexListModel
         delegate: Row {
             id: hexListViewItem
@@ -23,8 +22,12 @@ Item {
             // 偏移地址
             Rectangle {
                 height: rowHeight
-                width: offsetTxt.width
+                width: textMetrics.width + spacing
                 color: "#dddde1"
+                TextMetrics {
+                    id: textMetrics
+                    text: "0x00000000"
+                }
                 Text {
                     id: offsetTxt
                     text: "0x"+StrUtils.prefixZero(offset.toString(16), 8)

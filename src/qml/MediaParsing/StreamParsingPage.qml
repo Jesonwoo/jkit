@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.15
 import QtQuick.Controls 2.12
 import QtQuick.Dialogs 1.3
 import com.jkit.app 1.0
@@ -165,10 +165,16 @@ Page {
                 color: naluItem.highlight  ? "#0079d8":"#ffffff"
 
                 property int spacing: 8
+                TextMetrics {
+                    id: textMetrics
+                    text: "0x00000000"
+                }
+
                 Text {
                     id: offsetTxt
                     x: 0
                     height: naluInfoRect.height
+                    width: textMetrics.width+naluInfoRect.spacing
                     verticalAlignment: Text.AlignVCenter
                     font.pixelSize: Qt.application.font.pixelSize * 1.2
                     color: "gray"
@@ -177,7 +183,7 @@ Page {
                 // 色块
                 Rectangle {
                     id: colorRect
-                    x: offsetTxt.contentWidth + naluInfoRect.spacing
+                    x: offsetTxt.width + naluInfoRect.spacing
                     y: (naluInfoRect.height - height)/2
                     width: 4
                     height: naluInfoRect.height-4
