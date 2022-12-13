@@ -112,12 +112,10 @@ Item {
             }
             var upperLimit = 0 // 上限位置
             var lowerLimit = hexListView.contentHeight-hexListView.height // 下限位置
+
             var y = hexListView.contentY
-            if(wheel.angleDelta.y < 0) {
-                y += 20
-            } else {
-                y -= 20
-            }
+            y -= wheel.angleDelta.y
+
             if(y<0) { y = 0 }
             if(y>lowerLimit) { y = lowerLimit }
 
